@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPK Metode TOPSIS</title>
+<style>
+  :root{
+    --navy:#16324F;
+    --navy-deep:#0E2338;
+    --steel:#2E86AB;
+    --steel-soft:#DCEBF2;
+    --gold:#E8A33D;
+    --gold-soft:#FBEBD2;
+    --bg:#F5F8FA;
+    --card:#FFFFFF;
+    --text:#14202B;
+    --muted:#5B6B77;
+    --border:#DDE4E9;
+    --danger:#B5453B;
+    --serif: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+    --sans: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; font-family:var(--sans); background:var(--bg); color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .hero{
+    background:linear-gradient(160deg, var(--navy-deep) 0%, var(--navy) 100%);
+    color:#fff; padding:56px 24px 68px; position:relative; overflow:hidden;
+  }
+  .hero-inner{max-width:920px; margin:0 auto; position:relative; z-index:2;}
+  .eyebrow{font-family:var(--serif); font-style:italic; font-size:16px; color:var(--steel-soft); margin:0 0 8px;}
+  .hero h1{font-family:var(--serif); font-size:clamp(28px,4vw,40px); line-height:1.15; margin:0 0 14px; font-weight:600;}
+  .hero p{font-size:16px; line-height:1.6; color:#CBD8E2; max-width:640px; margin:0;}
+  .motif{position:absolute; right:-40px; top:-20px; width:340px; height:340px; opacity:0.55; z-index:1;}
+  .wrap{max-width:920px; margin:-34px auto 80px; padding:0 24px; position:relative; z-index:3;}
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:28px 28px 30px; margin-bottom:22px; box-shadow:0 1px 2px rgba(20,32,43,0.04);
+  }
+  .card-head{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
+  .step-num{
+    flex:none; width:30px; height:30px; border-radius:50%; background:var(--steel-soft);
+    color:var(--navy); font-weight:700; font-size:14px; display:flex; align-items:center; justify-content:center;
+  }
+  .card-head h2{font-family:var(--serif); font-size:20px; margin:0; font-weight:600;}
+  .card-sub{color:var(--muted); font-size:14px; margin:0 0 18px 42px; line-height:1.55;}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th{
+    text-align:left; font-size:12px; text-transform:none; color:var(--muted); font-weight:600;
+    padding:8px 10px; border-bottom:1px solid var(--border);
+  }
+  td{padding:7px 10px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  td input[type="text"], td input[type="number"]{
+    width:100%; border:1px solid var(--border); border-radius:7px; padding:7px 9px;
+    font-size:14px; font-family:var(--sans); font-variant-numeric:tabular-nums; background:#fff; color:var(--text);
+  }
+  .weight-cell{display:flex; align-items:center; gap:7px;}
+  .weight-cell input{width:100%;}
+  .weight-cell .pct{color:var(--muted); font-size:13.5px; flex:none;}
+  td input:focus, select:focus{outline:2px solid var(--steel); outline-offset:1px;}
+  select{
+    border:1px solid var(--border); border-radius:7px; padding:7px 9px; font-size:14px;
+    background:#fff; color:var(--text); font-family:var(--sans);
+  }
+  .num-col{text-align:right; font-variant-numeric:tabular-nums;}
+  .icon-btn{
+    border:none; background:transparent; color:var(--danger); cursor:pointer; font-size:13px;
+    padding:6px 8px; border-radius:6px; font-family:var(--sans);
+  }
+  .icon-btn:hover{background:#FBEAE8;}
+  .row-actions{display:flex; gap:10px; margin-top:14px;}
+  button{font-family:var(--sans); cursor:pointer;}
+  .btn-add{
+    border:1px dashed #B7C6CF; background:transparent; color:var(--navy); border-radius:8px;
+    padding:8px 14px; font-size:13px; font-weight:600;
+  }
+  .btn-add:hover{background:#EDF3F6;}
+  .weight-note{font-size:12.5px; color:var(--muted); margin-top:10px;}
+  .weight-note b{color:var(--navy);}
+  .calc-bar{display:flex; justify-content:center; margin:8px 0 34px;}
+  .btn-primary{
+    background:var(--navy); color:#fff; border:none; border-radius:10px;
+    padding:14px 30px; font-size:15px; font-weight:600; box-shadow:0 4px 14px rgba(22,50,79,0.25);
+  }
+  .btn-primary:hover{background:var(--navy-deep);}
+  .btn-primary:disabled{opacity:0.5; cursor:not-allowed;}
+  details{border:1px solid var(--border); border-radius:12px; margin-bottom:12px; overflow:hidden; background:#fff;}
+  summary{
+    list-style:none; cursor:pointer; padding:14px 18px; font-weight:600; font-size:14.5px;
+    display:flex; align-items:center; justify-content:space-between; color:var(--navy);
+  }
+  summary::-webkit-details-marker{display:none;}
+  summary .chev{color:var(--muted); font-size:13px; transition:transform .15s;}
+  details[open] summary .chev{transform:rotate(90deg);}
+  .detail-body{padding:2px 18px 18px;}
+  .detail-body table{font-size:13px;}
+  .formula{
+    font-family:var(--serif); font-style:italic; color:var(--navy); font-size:14.5px;
+    background:var(--steel-soft); display:inline-block; padding:6px 12px; border-radius:8px; margin:6px 0 14px;
+  }
+  .rank-table td, .rank-table th{padding:10px;}
+  #results table tbody tr{transition:background-color .15s ease;}
+  #results table tbody tr:hover{background-color:var(--steel-soft);}
+  #results .rank-table tbody tr:hover{background-color:var(--gold-soft);}
+  #results table tbody tr:hover td{cursor:help;}
+  #altHead th.crit-col{cursor:help; transition:background-color .15s ease; border-radius:6px;}
+  #altHead th.crit-col:hover{background-color:var(--steel-soft);}
+  .rank1{background:var(--gold-soft);}
+  .medal{
+    display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px;
+    border-radius:50%; background:var(--steel-soft); color:var(--navy); font-weight:700; font-size:12.5px;
+  }
+  .rank1 .medal{background:var(--gold); color:#fff;}
+  .bars{margin-top:20px; display:flex; flex-direction:column; gap:10px;}
+  .bar-row{display:grid; grid-template-columns:120px 1fr 64px; align-items:center; gap:10px; font-size:13px;}
+  .bar-track{background:var(--steel-soft); border-radius:6px; height:14px; overflow:hidden;}
+  .bar-fill{height:100%; border-radius:6px; background:var(--steel);}
+  .bar-fill.win{background:var(--gold);}
+  .verdict{
+    margin:20px 0 0; padding:14px 16px; background:var(--gold-soft); border-left:3px solid var(--gold);
+    border-radius:0 8px 8px 0; font-size:14px; line-height:1.6; color:var(--text);
+  }
+  .ex-pick{display:flex; align-items:center; gap:10px; margin:6px 0 14px; font-size:13.5px; color:var(--muted);}
+  .ex-result{margin:14px 0 0; font-size:13.5px; line-height:1.7; color:var(--text);}
+  .empty-hint{color:var(--muted); font-size:13.5px; text-align:center; padding:30px 10px;}
+  footer{text-align:center; color:var(--muted); font-size:12.5px; padding:0 24px 40px;}
+  @media(max-width:600px){
+    .hero{padding:44px 18px 60px;} .wrap{padding:0 14px;} .card{padding:20px 18px 22px;}
+    .bar-row{grid-template-columns:84px 1fr 50px;}
+    .card-sub{margin-left:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <svg class="motif" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="150" cy="55" r="7" fill="#E8A33D"/>
+    <circle cx="45" cy="150" r="7" fill="#5B7C93"/>
+    <circle cx="118" cy="108" r="6" fill="#fff"/>
+    <line x1="150" y1="55" x2="118" y2="108" stroke="#4A6A80" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <line x1="45" y1="150" x2="118" y2="108" stroke="#4A6A80" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="150" cy="55" r="16" stroke="#E8A33D" stroke-width="1" opacity="0.5"/>
+    <circle cx="45" cy="150" r="16" stroke="#5B7C93" stroke-width="1" opacity="0.5"/>
+  </svg>
+  <div class="hero-inner">
+    <p class="eyebrow">Sistem Pendukung Keputusan</p>
+    <h1>Kalkulator SPK dengan Metode TOPSIS</h1>
+    <p>TOPSIS (<em>Technique for Order of Preference by Similarity to Ideal Solution<em>) merupakan metode analisis multi-kriteria berdasarkan jarak solusi ideal positif dan negatif.</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="card">
+    <div class="card-head"><div class="step-num">1</div><h2>Kriteria Keputusan</h2></div>
+    <p class="card-sub">Tentukan kriteria, bobot kepentingan dalam persen (0–100), dan jenisnya.<br><strong style="font-style: normal;">NOTE:</strong><br><b>Benefit</b> = semakin besar semakin baik, <br><b>Cost</b> = semakin kecil semakin baik.</p>
+    <table id="critTable">
+      <thead><tr><th>Nama Kriteria</th><th style="width:120px">Bobot (%)</th><th style="width:130px">Jenis</th><th style="width:40px"></th></tr></thead>
+      <tbody id="critBody"></tbody>
+    </table>
+    <div class="row-actions"><button class="btn-add" id="addCrit">+ Tambah kriteria</button></div>
+    <p class="weight-note" id="weightNote"></p>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div class="step-num">2</div><h2>Data Alternatif</h2></div>
+    <p class="card-sub">Masukkan nilai setiap alternatif untuk tiap kriteria di atas yang akan dinilai.</p>
+    <div style="overflow-x:auto;">
+      <table id="altTable">
+        <thead id="altHead"></thead>
+        <tbody id="altBody"></tbody>
+      </table>
+    </div>
+    <div class="row-actions"><button class="btn-add" id="addAlt">+ Tambah alternatif</button></div>
+  </div>
+
+  <div class="calc-bar">
+    <button class="btn-primary" id="calcBtn">Hitung Ranking TOPSIS</button>
+  </div>
+
+  <div id="results"></div>
+
+  <footer>&copy Adhitya Christian Syah 2026 | 2247101169 | Sistem Informasi</footer>
+</div>
+
+<script>
+let critId = 0, altId = 0;
+let exIdx = 0;
+const state = {
+  criteria: [],
+  alternatives: []
+};
+
+function seedData(){
+  const c = [
+    {id:critId++, name:"Harga (juta Rp)", weight:30, type:"cost"},
+    {id:critId++, name:"RAM (GB)", weight:25, type:"benefit"},
+    {id:critId++, name:"Penyimpanan SSD (GB)", weight:20, type:"benefit"},
+    {id:critId++, name:"Daya Tahan Baterai (jam)", weight:25, type:"benefit"},
+  ];
+  state.criteria = c;
+  const rows = [
+    ["Laptop A", [12,8,256,8]],
+    ["Laptop B", [15,16,512,10]],
+    ["Laptop C", [10,8,256,6]],
+    ["Laptop D", [18,16,1000,12]],
+    ["Laptop E", [13,8,512,9]],
+  ];
+  state.alternatives = rows.map(([name, vals])=>{
+    const values = {};
+    c.forEach((crit,i)=>values[crit.id]=vals[i]);
+    return {id: altId++, name, values};
+  });
+}
+
+function fmt(n, d=4){
+  if (n===undefined || n===null || isNaN(n)) return "–";
+  return Number(n).toFixed(d);
+}
+
+function fmtFull(n){
+  if (n===undefined || n===null || isNaN(n)) return "–";
+  return Number(n).toFixed(15).replace(/\.?0+$/,"");
+}
+
+function renderCriteria(){
+  const body = document.getElementById("critBody");
+  body.innerHTML = "";
+  state.criteria.forEach(crit=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="text" value="${escapeHtml(crit.name)}" data-role="cname" data-id="${crit.id}"></td>
+      <td>
+        <div class="weight-cell">
+          <input type="number" step="1" min="0" max="100" value="${crit.weight}" class="num-col" data-role="cweight" data-id="${crit.id}">
+          <span class="pct">%</span>
+        </div>
+      </td>
+      <td>
+        <select data-role="ctype" data-id="${crit.id}">
+          <option value="benefit" ${crit.type==='benefit'?'selected':''}>Benefit</option>
+          <option value="cost" ${crit.type==='cost'?'selected':''}>Cost</option>
+        </select>
+      </td>
+      <td><button class="icon-btn" data-role="cdel" data-id="${crit.id}" title="Hapus kriteria">✕</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  const sum = state.criteria.reduce((s,c)=>s+Number(c.weight||0),0);
+  document.getElementById("weightNote").innerHTML =
+    `Total bobot saat ini: <b>${fmt(sum,1)}%</b>${Math.abs(sum-100)>0.05 ? " — akan dinormalisasi otomatis menjadi 100% saat dihitung." : " ✓"}`;
+  renderAlternatives();
+}
+
+function renderAlternatives(){
+  const head = document.getElementById("altHead");
+  const body = document.getElementById("altBody");
+  const wsum = state.criteria.reduce((s,c)=>s+Number(c.weight||0),0) || 1;
+  let headRow = `<tr><th>Nama Alternatif</th>`;
+  state.criteria.forEach(c=>{
+    const pct = Number(c.weight||0)/wsum*100;
+    const jenis = c.type==="benefit" ? "Benefit (semakin besar semakin baik)" : "Cost (semakin kecil semakin baik)";
+    const tip = `${c.name}\nBobot: ${fmt(pct,1)}%\nJenis: ${jenis}`;
+    headRow += `<th class="num-col crit-col" data-crit-id="${c.id}" title="${escapeHtml(tip)}">${escapeHtml(c.name)}</th>`;
+  });
+  headRow += `<th style="width:40px"></th></tr>`;
+  head.innerHTML = headRow;
+
+  body.innerHTML = "";
+  state.alternatives.forEach(alt=>{
+    const tr = document.createElement("tr");
+    let cells = `<td><input type="text" value="${escapeHtml(alt.name)}" data-role="aname" data-id="${alt.id}"></td>`;
+    state.criteria.forEach(c=>{
+      const v = alt.values[c.id] ?? 0;
+      cells += `<td><input type="number" step="any" class="num-col" value="${v}" data-role="aval" data-id="${alt.id}" data-crit="${c.id}"></td>`;
+    });
+    cells += `<td><button class="icon-btn" data-role="adel" data-id="${alt.id}" title="Hapus alternatif">✕</button></td>`;
+    tr.innerHTML = cells;
+    body.appendChild(tr);
+  });
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+}
+
+document.getElementById("altHead").addEventListener("mouseover", e=>{
+  const th = e.target.closest(".crit-col");
+  if (!th) return;
+  const j = state.criteria.findIndex(c=>c.id==th.dataset.critId);
+  const c = state.criteria[j];
+  if (!c) return;
+  const res = topsis();
+  const jenis = c.type==="benefit" ? "Benefit (semakin besar semakin baik)" : "Cost (semakin kecil semakin baik)";
+  th.title =
+    `${c.name}\n`+
+    `Bobot ternormalisasi: ${fmt(res.w[j]*100,1)}%\n`+
+    `Jenis: ${jenis}\n`+
+    `Solusi ideal positif (A\u207A): ${fmt(res.idealPos[j])}\n`+
+    `Solusi ideal negatif (A\u207B): ${fmt(res.idealNeg[j])}`;
+});
+
+document.getElementById("critBody").addEventListener("input", e=>{
+  const {role, id} = e.target.dataset;
+  const crit = state.criteria.find(c=>c.id==id);
+  if (!crit) return;
+  if (role==="cname") crit.name = e.target.value;
+  if (role==="cweight"){
+    let val = parseFloat(e.target.value);
+    if (isNaN(val)) val = 0;
+    if (val < 0) val = 0;
+    if (val > 100) val = 100;
+    crit.weight = val;
+    const sum = state.criteria.reduce((s,c)=>s+Number(c.weight||0),0);
+    document.getElementById("weightNote").innerHTML =
+      `Total bobot saat ini: <b>${fmt(sum,1)}%</b>${Math.abs(sum-100)>0.05 ? " — akan dinormalisasi otomatis menjadi 100% saat dihitung." : " ✓"}`;
+  }
+});
+document.getElementById("critBody").addEventListener("change", e=>{
+  const {role, id} = e.target.dataset;
+  const crit = state.criteria.find(c=>c.id==id);
+  if (!crit) return;
+  if (role==="ctype") crit.type = e.target.value;
+  if (role==="cname" || role==="cweight") renderAlternatives();
+  if (role==="cweight" && Number(e.target.value) > 100){
+    e.target.value = 100;
+  }
+});
+document.getElementById("critBody").addEventListener("click", e=>{
+  const btn = e.target.closest('[data-role="cdel"]');
+  if (!btn) return;
+  if (state.criteria.length<=2){ alert("Minimal 2 kriteria diperlukan."); return; }
+  state.criteria = state.criteria.filter(c=>c.id!=btn.dataset.id);
+  state.alternatives.forEach(a=> delete a.values[btn.dataset.id]);
+  renderCriteria();
+});
+document.getElementById("addCrit").addEventListener("click", ()=>{
+  const id = critId++;
+  state.criteria.push({id, name:"Kriteria baru", weight:10, type:"benefit"});
+  state.alternatives.forEach(a=> a.values[id]=0);
+  renderCriteria();
+});
+
+document.getElementById("altBody").addEventListener("input", e=>{
+  const {role, id, crit} = e.target.dataset;
+  const alt = state.alternatives.find(a=>a.id==id);
+  if (!alt) return;
+  if (role==="aname") alt.name = e.target.value;
+  if (role==="aval") alt.values[crit] = parseFloat(e.target.value)||0;
+});
+document.getElementById("altBody").addEventListener("click", e=>{
+  const btn = e.target.closest('[data-role="adel"]');
+  if (!btn) return;
+  if (state.alternatives.length<=2){ alert("Minimal 2 alternatif diperlukan."); return; }
+  state.alternatives = state.alternatives.filter(a=>a.id!=btn.dataset.id);
+  renderAlternatives();
+});
+document.getElementById("addAlt").addEventListener("click", ()=>{
+  const values = {};
+  state.criteria.forEach(c=> values[c.id]=0);
+  state.alternatives.push({id: altId++, name:"Alternatif baru", values});
+  renderAlternatives();
+});
+
+function topsis(){
+  const crits = state.criteria;
+  const alts = state.alternatives;
+  const n = crits.length, m = alts.length;
+  const wsum = crits.reduce((s,c)=>s+Number(c.weight||0),0) || 1;
+  const w = crits.map(c=> Number(c.weight||0)/wsum);
+
+  const X = alts.map(a=> crits.map(c=> Number(a.values[c.id])||0));
+
+  const denom = crits.map((c,j)=> Math.sqrt(X.reduce((s,row)=> s+row[j]*row[j],0)) || 1);
+  const R = X.map(row=> row.map((v,j)=> v/denom[j]));
+  const V = R.map(row=> row.map((v,j)=> v*w[j]));
+
+  const idealPos = crits.map((c,j)=>{
+    const col = V.map(row=>row[j]);
+    return c.type==="benefit" ? Math.max(...col) : Math.min(...col);
+  });
+  const idealNeg = crits.map((c,j)=>{
+    const col = V.map(row=>row[j]);
+    return c.type==="benefit" ? Math.min(...col) : Math.max(...col);
+  });
+
+  const dPos = V.map(row=> Math.sqrt(row.reduce((s,v,j)=> s+(v-idealPos[j])**2,0)));
+  const dNeg = V.map(row=> Math.sqrt(row.reduce((s,v,j)=> s+(v-idealNeg[j])**2,0)));
+  const ci = dPos.map((d,i)=> {
+    const total = d+dNeg[i];
+    return total===0 ? 0 : dNeg[i]/total;
+  });
+
+  return {crits, alts, w, X, denom, R, V, idealPos, idealNeg, dPos, dNeg, ci};
+}
+
+function table(headers, rows){
+  let h = "<table><thead><tr>" + headers.map(x=>`<th class="num-col">${x}</th>`).join("") + "</tr></thead><tbody>";
+  rows.forEach(r=>{
+    h += "<tr>" + r.map((c,i)=>{
+      const isObj = c && typeof c === "object";
+      const val = isObj ? c.text : c;
+      const tip = isObj && c.title!==undefined ? ` title="Nilai lengkap: ${c.title}"` : "";
+      return i===0 ? `<td${tip}>${val}</td>` : `<td class="num-col"${tip}>${val}</td>`;
+    }).join("") + "</tr>";
+  });
+  h += "</tbody></table>";
+  return h;
+}
+
+function renderResults(){
+  const res = topsis();
+  const {crits, alts, w, X, R, V, idealPos, idealNeg, dPos, dNeg, ci} = res;
+  const names = crits.map(c=>c.name);
+
+  const ranked = alts.map((a,i)=>({name:a.name, ci: ci[i], dPos: dPos[i], dNeg: dNeg[i]}))
+                      .sort((a,b)=> b.ci - a.ci);
+  const maxCi = Math.max(...ranked.map(r=>r.ci), 0.0001);
+
+  if (exIdx >= alts.length || exIdx < 0) exIdx = 0;
+  const ex = exIdx;
+  const exRows = crits.map((c,j)=>[
+    escapeHtml(c.name),
+    fmt(X[ex][j],2),
+    {text:fmt(R[ex][j]), title:fmtFull(R[ex][j])},
+    {text:fmt(V[ex][j]), title:fmtFull(V[ex][j])},
+    {text:fmt(idealPos[j]), title:fmtFull(idealPos[j])},
+    {text:fmt(idealNeg[j]), title:fmtFull(idealNeg[j])}
+  ]);
+
+  const out = document.getElementById("results");
+
+  const openStates = Array.from(out.querySelectorAll("details")).map(d=>d.open);
+
+  out.innerHTML = `
+
+    <details>
+      <summary>Matriks Keputusan (data asli) <span class="chev">›</span></summary>
+      <div class="detail-body">
+        ${table(["Alternatif", ...names], alts.map((a,i)=>[a.name, ...X[i].map(v=>fmt(v,2))]))}
+      </div>
+    </details>
+
+    <details>
+      <summary>Normalisasi Matriks <span class="chev">›</span></summary>
+      <div class="detail-body">
+        <div class="formula">r<sub>ij</sub> = x<sub>ij</sub> / √(Σ x<sub>ij</sub>²)</div>
+        ${table(["Alternatif", ...names], alts.map((a,i)=>[a.name, ...R[i].map(v=>({text:fmt(v), title:fmtFull(v)}))]))}
+      </div>
+    </details>
+
+    <details>
+      <summary>Matriks Ternormalisasi Terbobot <span class="chev">›</span></summary>
+      <div class="detail-body">
+        <div class="formula">v<sub>ij</sub> = w<sub>j</sub> × r<sub>ij</sub></div>
+        <p class="card-sub" style="margin-left:0">Bobot terpakai: <br>${names.map((nm,i)=>`${nm} = ${fmt(w[i]*100,1)}%`).join("<br>")}<br></p>
+        ${table(["Alternatif", ...names], alts.map((a,i)=>[a.name, ...V[i].map(v=>({text:fmt(v), title:fmtFull(v)}))]))}
+      </div>
+    </details>
+
+    <details>
+      <summary>Solusi Ideal Positif (A⁺) &amp; Negatif (A⁻) <span class="chev">›</span></summary>
+      <div class="detail-body">
+        <div class="formula">A<sup>+</sup><sub>j</sub> = maks(v<sub>ij</sub>) untuk Benefit <br><span style="visibility: hidden;">A<sup>+</sup><sub>j</sub> =</span> min(v<sub>ij</sub>) untuk Cost</div>
+        <div class="formula">A<sup>−</sup><sub>j</sub> = min(v<sub>ij</sub>) untuk Benefit <br><span style="visibility: hidden;">A<sup>−</sup><sub>j</sub> =</span> maks(v<sub>ij</sub>) untuk Cost</div>
+        ${table(["Solusi", ...names], [["A⁺ (ideal positif)", ...idealPos.map(v=>({text:fmt(v), title:fmtFull(v)}))], ["A⁻ (ideal negatif)", ...idealNeg.map(v=>({text:fmt(v), title:fmtFull(v)}))]])}
+      </div>
+    </details>
+
+    <details>
+      <summary>Jarak ke Solusi Ideal <span class="chev">›</span></summary>
+      <div class="detail-body">
+        <div class="formula">D⁺<sub>i</sub> = √Σ(v<sub>ij</sub> − A⁺<sub>j</sub>)²</div>
+        <div class="formula">D⁻<sub>i</sub> = √Σ(v<sub>ij</sub> − A⁻<sub>j</sub>)²</div>
+        ${table(["Alternatif", "D⁺ (jarak ke positif)", "D⁻ (jarak ke negatif)"], alts.map((a,i)=>[a.name, {text:fmt(dPos[i]), title:fmtFull(dPos[i])}, {text:fmt(dNeg[i]), title:fmtFull(dNeg[i])}]))}
+      </div>
+    </details>
+
+    <details>
+      <summary>Data Perhitungan per Alternatif <span class="chev">›</span></summary>
+      <div class="detail-body">
+        <div class="ex-pick">
+          <label for="exSel">Pilih alternatif:</label>
+          <select id="exSel">
+            ${alts.map((a,i)=>`<option value="${i}" ${i===ex?'selected':''}>${escapeHtml(a.name)}</option>`).join("")}
+          </select>
+        </div>
+        ${table(["Kriteria", "X (data asli)", "R<sub>ij</sub> (normalisasi)", "V<sub>ij</sub>", "A⁺", "A⁻"], exRows)}
+        <p class="ex-result">
+          D⁺<sub>i</sub> = <b>${fmt(dPos[ex])}</b> &nbsp;|&nbsp;
+          D⁻<sub>i</sub> = <b>${fmt(dNeg[ex])}</b><br>
+          C<sub>i</sub> = D⁻<sub>i</sub> / (D⁺<sub>i</sub> + D⁻<sub>i</sub>) = ${fmt(dNeg[ex])} / (${fmt(dPos[ex])} + ${fmt(dNeg[ex])}) = <b>${fmt(ci[ex])}</b>
+        </p>
+      </div>
+    </details>
+
+    <div class="card">
+      <div class="card-head"><div class="step-num">3</div><h2>Nilai Preferensi &amp; Ranking</h2></div>
+      <div class="formula">C<sub>i</sub> = D⁻<sub>i</sub> / (D⁺<sub>i</sub> + D⁻<sub>i</sub>)</div>
+      <table class="rank-table">
+        <thead><tr><th>Peringkat</th><th>Alternatif</th><th class="num-col">Nilai Ci</th></tr></thead>
+        <tbody>
+          ${ranked.map((r,i)=>`
+            <tr class="${i===0?'rank1':''}">
+              <td><span class="medal">${i+1}</span></td>
+              <td>${escapeHtml(r.name)}</td>
+              <td class="num-col" title="Nilai lengkap: ${fmtFull(r.ci)}">${fmt(r.ci)}</td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+      <div class="bars">
+        ${ranked.map((r,i)=>`
+          <div class="bar-row">
+            <span>${escapeHtml(r.name)}</span>
+            <div class="bar-track"><div class="bar-fill ${i===0?'win':''}" style="width:${(r.ci/maxCi*100).toFixed(1)}%"></div></div>
+            <span class="num-col" title="Nilai lengkap: ${fmtFull(r.ci)}">${fmt(r.ci,3)}</span>
+          </div>`).join("")}
+      </div>
+      <p class="verdict">Alternatif terbaik adalah <b>${ranked[0].name}</b> dengan C<sub>i</sub> = <b>${fmt(ranked[0].ci)}</b>, karena paling dekat dengan solusi ideal dan paling jauh dari solusi terburuk.</p>
+    </div>
+  `;
+
+  out.querySelectorAll("details").forEach((d,i)=>{ if (openStates[i]) d.open = true; });
+}
+
+document.getElementById("results").addEventListener("change", e=>{
+  if (e.target.id === "exSel"){
+    exIdx = parseInt(e.target.value, 10) || 0;
+    renderResults();
+  }
+});
+
+document.getElementById("calcBtn").addEventListener("click", renderResults);
+
+seedData();
+renderCriteria();
+document.getElementById("results").innerHTML = `<div class="empty-hint">Sistem Pendukung Keputusan dengan Metode TOPSIS (<span style="font-style: italic">Technique for Order of Preference by Similarity to Ideal Solution</span>)</div>`;
+</script>
+
+</body>
+</html>
